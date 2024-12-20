@@ -2,7 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import axios from 'axios';
-import { BevyInspectorProvider, BevyObject } from './bevyInspector';
+import { BevyInspectorProvider } from './bevyInspectorTreeProvider';
+import { BevyRemote, BevyRemoteObject } from './bevyRemote';
 
 type BevyQueryResponse = {
 	entity: number,
@@ -16,13 +17,26 @@ export function activate(context: vscode.ExtensionContext) {
 	const url = "http://127.0.0.1";
 	const port = "15702";
 
-	const bevyInspector = new BevyInspectorProvider();
-	vscode.window.registerTreeDataProvider('bevyInspector', bevyInspector);
-	vscode.commands.registerCommand('bevyInspector.addEntry', () => vscode.window.showInformationMessage(`Successfully called add entry.`));
-	vscode.commands.registerCommand('bevyInspector.editEntry', (node: BevyObject) => vscode.window.showInformationMessage(`Successfully called edit entry on ${node.label}.`));
-	vscode.commands.registerCommand('bevyInspector.deleteEntry', (node: BevyObject) => vscode.window.showInformationMessage(`Successfully called delet entry on ${node.label}.`));
+	const remote = new BevyRemote(url, port);
+	const bevyInspector = new BevyInspectorProvider(remote);
+
+	remote.onUpdate = () => {
+		bevyInspector.refresh();
+	};
+
+	const tree = vscode.window.createTreeView('bevyInspector', new BevyInspectorTreeViewOptions(bevyInspector));
 
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+class BevyInspectorTreeViewOptions implements vscode.TreeViewOptions<BevyRemoteObject> {
+	treeDataProvider: BevyInspectorProvider;
+
+	constructor(
+		public readonly provider: BevyInspectorProvider,
+	) {
+		this.treeDataProvider = provider;
+	}
+}
