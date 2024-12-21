@@ -19,15 +19,18 @@ export class BevyInspectorProvider implements vscode.TreeDataProvider<BevyRemote
     getChildren(element?: BevyRemoteObject | undefined): vscode.ProviderResult<BevyRemoteObject[]> {
         if(element) {
             if (element instanceof BevyEntity) {
-                return this.remote.load_all_components_for_entity(element.id);
+                return this.remote.get_components_of_entity(element.id);
             } else if (element instanceof BevyComponent) {
                 if (element.name === "Children") {
                     return this.remote.get_children_of(element.entity);
                 } else if (element.name === "Parent") {
                     return this.remote.get_parent_of(element.entity);
                 } else {
-
+                    // return element.parms;
+                    return this.remote.get_parms_of_entity_component(element.entity, element.path);
                 }
+            } else if (element instanceof BevyComponentParm) {
+                return element.subparms;
             }
         } else {
             return this.remote.get_all_entities();
